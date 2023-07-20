@@ -5,13 +5,15 @@ Locate resources and their usage/reference.
 Diagnosis reference to inexistant or invalid resources.
 
 Usage:
-    resource_indexer.py [(-o | --output) <filepath>]
+    resource_indexer.py [(-o | --output) <filepath>] 
+    resource_indexer.py [(-p | --project) <projectpath>]
     resource_indexer.py [--orphan]
     resource_indexer.py (-h | --help)
 
 Options:
     -h --help      Show this screen.
     -o --output    Set the output file path [default: resources.index].
+    -p --project   Path to the project to inspect [default: .].
     --orphan       Display orphan resources (experimental)
 """
 
@@ -22,7 +24,7 @@ import re
 from docopt import docopt
 
 
-def retrieve_valid_filepaths():
+def retrieve_valid_filepaths(project_directory):
     """
     Retrieve the valid file paths.
 
@@ -32,17 +34,18 @@ def retrieve_valid_filepaths():
         an array of valid file path.
     """
     valid_files = []
-    for root, _directory_names, file_names in os.walk("."):
+    for root, _directory_names, file_names in os.walk(project_directory):
         for file_name in file_names:
             file_path = os.path.join(root, file_name)
             _, extension = os.path.splitext(file_path)
-            if root == "./.import" or extension == ".import":
+            if re.search("(\\.import)|(\\.git)", root) or file_name.endswith(".import") or file_name[0] == '.':
                 continue
-            valid_files.append(file_path)
+            rel_path = os.path.relpath(file_path, project_directory)
+            valid_files.append(f"./{rel_path}")
     return valid_files
 
 
-def build_resources_index(valid_files):
+def build_resources_index(project_directory, valid_files):
     """
     Build the index out of the valid files.
 
@@ -70,14 +73,15 @@ def build_resources_index(valid_files):
     resource_pattern = re.compile('"*?(res:/)(/[^"%]+\\.[a-zA-Z0-9]+)"')
     index = {}
     for path in valid_files:
-        mime_type, _ = mimetypes.guess_type(path)
+        absolute_path = f"{project_directory}/{path}"
+        mime_type, _ = mimetypes.guess_type(absolute_path)
         if mime_type is not None and mime_type.startswith("text/godot"):
             if path not in index:
                 index[path] = {"valid": True, "references": [], "count": 0, "by": []}
             else:
                 index[path]["valid"] = True
             # Let's dissect the file.
-            with open(path, "r", encoding="UTF-8") as file:
+            with open(absolute_path, "r", encoding="UTF-8") as file:
                 line_number = 0
                 for line in file:
                     result = resource_pattern.findall(line)
@@ -177,13 +181,18 @@ def main():
     """
     arguments = docopt(__doc__, options_first=True)
     output_filepath = "resources.index"
+    project_directory = "."
 
     if arguments["--output"]:
         output_filepath = arguments["<filepath>"]
     print(f"Output file path is '{output_filepath}'")
+    if arguments["--project"]:
+        project_directory = arguments["<projectpath>"]
 
-    valid_files = retrieve_valid_filepaths()
-    index = build_resources_index(valid_files)
+    project_directory = os.path.abspath(project_directory)
+
+    valid_files = retrieve_valid_filepaths(project_directory)
+    index = build_resources_index(project_directory, valid_files)
     save_index(index, output_filepath)
     diagnosis_bad_references(index)
     if arguments["--orphan"]:
