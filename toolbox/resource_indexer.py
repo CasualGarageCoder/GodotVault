@@ -82,7 +82,7 @@ def build_resources_index(project_directory, valid_files):
                 index[path]["valid"] = True
             # Let's dissect the file.
             with open(absolute_path, "r", encoding="UTF-8") as file:
-                line_number = 0
+                line_number = 1
                 for line in file:
                     result = resource_pattern.findall(line)
                     if len(result) > 0:  # We got a reference.
