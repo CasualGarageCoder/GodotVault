@@ -1,0 +1,33 @@
+[1mdiff --git a/toolbox/resource_indexer.py b/toolbox/resource_indexer.py[m
+[1mindex a3b32de..1373eb7 100755[m
+[1m--- a/toolbox/resource_indexer.py[m
+[1m+++ b/toolbox/resource_indexer.py[m
+[36m@@ -1,14 +1,18 @@[m
+ #!/bin/python3[m
+ """[m
+ Resource Indexer.[m
+[32m+[m[32mLocate resources and their usage/reference.[m
+[32m+[m[32mDiagnosis reference to inexistant or invalid resources.[m
+ [m
+ Usage:[m
+     resource_indexer.py [(-o | --output) <filepath>][m
+[32m+[m[32m    resource_indexer.py [--orphan][m
+     resource_indexer.py (-h | --help)[m
+ [m
+ Options:[m
+     -h --help      Show this screen.[m
+     -o --output    Set the output file path [default: resources.index].[m
+[32m+[m[32m    --orphan       Display orphan resources (experimental)[m
+ """[m
+ [m
+ import os[m
+[36m@@ -182,7 +186,8 @@[m [mdef main():[m
+     index = build_resources_index(valid_files)[m
+     save_index(index, output_filepath)[m
+     diagnosis_bad_references(index)[m
+[31m-    diagnosis_orphan_resources(index)[m
+[32m+[m[32m    if arguments["--orphan"]:[m
+[32m+[m[32m        diagnosis_orphan_resources(index)[m
+ [m
+ [m
+ if __name__ == "__main__":[m

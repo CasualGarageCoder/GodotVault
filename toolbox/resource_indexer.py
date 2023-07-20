@@ -1,14 +1,18 @@
 #!/bin/python3
 """
 Resource Indexer.
+Locate resources and their usage/reference.
+Diagnosis reference to inexistant or invalid resources.
 
 Usage:
     resource_indexer.py [(-o | --output) <filepath>]
+    resource_indexer.py [--orphan]
     resource_indexer.py (-h | --help)
 
 Options:
     -h --help      Show this screen.
     -o --output    Set the output file path [default: resources.index].
+    --orphan       Display orphan resources (experimental)
 """
 
 import os
@@ -182,7 +186,8 @@ def main():
     index = build_resources_index(valid_files)
     save_index(index, output_filepath)
     diagnosis_bad_references(index)
-    diagnosis_orphan_resources(index)
+    if arguments["--orphan"]:
+        diagnosis_orphan_resources(index)
 
 
 if __name__ == "__main__":
